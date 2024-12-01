@@ -23,7 +23,7 @@ export default function VerifyCodeForm() {
         try {
           const { data } = await axios.post("https://exam.elevateegy.com/api/v1/auth/verifyResetCode", values);
           console.log(data);
-          if (data.message === "success") {
+          if (data.status === "Success") {
             router.push('/set-password');
 
           }

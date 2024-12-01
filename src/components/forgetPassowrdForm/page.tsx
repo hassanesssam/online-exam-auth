@@ -22,12 +22,18 @@ export default function ForgetPasswordForm() {
   const [responseSucces , setResponse]= useState(null)
   const [apiEmailError , setApiEmailError]= useState(null)
 
+
+  const saveEmailToLocalStorage = (email: string) => {
+    localStorage.setItem('email', email);
+  };
+
   const handleFormData = async(values : FormValues) => {
     try {
       const { data } = await axios.post("https://exam.elevateegy.com/api/v1/auth/forgotPassword", values);
       console.log(data);
       if (data.message === "success") {
         dispatch(setEmail(values.email));
+        saveEmailToLocalStorage(values.email);
         setResponse(data.info)
         router.push('/verify-code');
 

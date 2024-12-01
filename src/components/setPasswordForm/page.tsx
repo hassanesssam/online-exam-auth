@@ -7,7 +7,7 @@ import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/rtk/store';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ButtonForm from '../button/page';
 import { signIn } from 'next-auth/react';
 
@@ -18,16 +18,29 @@ interface FormValues {
 
 export default function SetPasswordForm() {
   const router = useRouter();
-  const email = useSelector((state: RootState) => state.email.email); 
-
+  const reduxEmail = useSelector((state: RootState) => state.email.email); 
+  const [email, setEmail] = useState<string>(''); 
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const [isRetypeVisible, setRetypeVisible] = useState(false);
 
-  const handleFormData = async (values:FormValues) => {
+  useEffect(() => {
+    if (reduxEmail) {
+      setEmail(reduxEmail);
+    } else {
+      const storedEmail = localStorage.getItem('email');
+      if (storedEmail) {
+        setEmail(storedEmail);
+      } else {
+        router.push('/forgot-password'); 
+      }
+    }
+  }, [reduxEmail, router]);
+
+  const handleFormData = async (values: FormValues) => {
     try {
       const { data } = await axios.put('https://exam.elevateegy.com/api/v1/auth/resetPassword', {
-        email, 
-        password: values.password,
+        email,
+        newPassword: values.password,
       });
       console.log(data);
       if (data.message === 'success') {
@@ -62,15 +75,16 @@ export default function SetPasswordForm() {
     validationSchema: validSchema,
     onSubmit: handleFormData,
   });
-  const handleIdentityGoogle = async()=>{
-    signIn("google" , { callbackUrl: "/" });
-}
-const handleIdentityFacebook = async()=>{
-    signIn("facebook" , { callbackUrl: "/" });
-}
-const handleIdentityTwitter = async()=>{
-    signIn("twitter" , { callbackUrl: "/" });
-}
+
+  const handleIdentityGoogle = async () => {
+    signIn('google', { callbackUrl: '/' });
+  };
+  const handleIdentityFacebook = async () => {
+    signIn('facebook', { callbackUrl: '/' });
+  };
+  const handleIdentityTwitter = async () => {
+    signIn('twitter', { callbackUrl: '/' });
+  };
 
   return (
     <div className="w-full">
@@ -132,7 +146,7 @@ const handleIdentityTwitter = async()=>{
           <p className="text-red-500 text-sm p-0">{formik.errors.rePassword}</p>
         )}
 
-        <ButtonForm text={formik.isSubmitting ? 'Sending...' : 'Send'}/>
+        <ButtonForm text={formik.isSubmitting ? 'Sending...' : 'Send'} />
         <div className="flex items-center justify-center my-2">
           <hr className="flex-grow border-gray-300" />
           <span className="mx-4 text-gray-500 text-base">Or Continue with</span>
@@ -155,8 +169,7 @@ const handleIdentityTwitter = async()=>{
             >
                 <Image width={25} height={25} alt="google" src={"/images/Logo (1).png"} />
             </div>
-        </div>
-
+      </div>
       </form>
     </div>
   );
