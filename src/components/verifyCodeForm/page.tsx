@@ -1,13 +1,15 @@
 'use client'
 import Image from "next/image";
-import Link from "next/link";
 import ButtonForm from "../button/page";
 import { useFormik } from "formik";
 import * as Yup from 'yup';
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation'; 
 import { signIn } from "next-auth/react";
+import { useSelector } from "react-redux";
+import { RootState } from '@/rtk/store';
+
 
 
 
@@ -19,6 +21,43 @@ interface FormValues {
 export default function VerifyCodeForm() {
     const router = useRouter();
     const [apiUserError , setApiUserError]= useState(null)
+    const reduxEmail = useSelector((state: RootState) => state.email.email); 
+    const [responseSucces , setResponse]= useState(null)
+
+    const [email, setEmail] = useState<string>(''); 
+
+
+    useEffect(() => {
+      if (reduxEmail) {
+        setEmail(reduxEmail);
+      } else {
+        const storedEmail = localStorage.getItem('email');
+        if (storedEmail) {
+          setEmail(storedEmail);
+        } else {
+          router.push('/forgot-password'); 
+        }
+      }
+    }, [reduxEmail, router]);
+    const handleResendCode = async()=>{
+      try {
+        const { data } = await axios.post("https://exam.elevateegy.com/api/v1/auth/forgotPassword", {
+          email
+        });
+        console.log(data);
+        if (data.message === "success") {
+
+          setResponse(data.info)
+          // router.push('/verify-code');
+  
+        }
+      } catch (error) {
+          if(axios.isAxiosError(error)){
+              console.log(error);
+              
+          }
+      }
+    }
     const handleFormData = async(values : FormValues) => {
         try {
           const { data } = await axios.post("https://exam.elevateegy.com/api/v1/auth/verifyResetCode", values);
@@ -49,8 +88,9 @@ export default function VerifyCodeForm() {
         ,onSubmit : handleFormData
     })
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.name === "email" && apiUserError) {
+        if (e.target.name === "resetCode" && apiUserError || responseSucces) {
             setApiUserError(null);
+            setResponse(null);
         }
         formik.handleChange(e); 
       };
@@ -88,12 +128,15 @@ export default function VerifyCodeForm() {
         {apiUserError && (
           <p className="text-red-500 text-sm p-0">{apiUserError}</p>
         )}
+        {responseSucces && (
+          <p className="text-green-500 text-sm p-0">{responseSucces}</p>
+        )}
 
 
-        <p className="text-end text-base font-normal mb-[10px]">
-         Didn’t receive a code?  
-           <Link className="text-[#4461F2]" href={"/login"}> Resend</Link>
-        </p>
+        <div className="text-end text-base font-normal mb-[10px]">
+         Didn’t receive a code?   
+           <span onClick={handleResendCode} className="text-[#4461F2] cursor-pointer" > Resend</span>
+        </div>
         <ButtonForm text={formik.isSubmitting ? 'Verify...' : 'Verify'}/>
         <div className="flex items-center justify-center my-2">
           <hr className="flex-grow border-gray-300" />
