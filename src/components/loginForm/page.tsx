@@ -21,7 +21,7 @@ export default function LoginForm() {
         const result = await signIn("credentials" , {
             email : values.email,
             password : values.password,
-            callbackUrl : "/",
+            callbackUrl : "/dashboard",
             redirect: false
         })
 
@@ -35,7 +35,7 @@ export default function LoginForm() {
             }
           }
           else if(result?.ok){
-            router.push("/")
+            router.push("/dashboard")
           }
       };    
     const validSchema = Yup.object({

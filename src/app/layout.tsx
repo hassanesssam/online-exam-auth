@@ -1,8 +1,6 @@
 'use client'
-// import type { Metadata } from "next";
+import AuthProvider from "@/context/AuthProvider";
 import "./globals.css";
-import { Provider } from 'react-redux';
-import store from "@/rtk/store";
 
 // export const metadata: Metadata = {
 //   title: "Create Next App",
@@ -18,9 +16,9 @@ export default function RootLayout({
     <html lang="en">
       <body
       >
-        <Provider store={store}>
+        <AuthProvider >
            {children}
-        </Provider>,
+        </AuthProvider>
 
       </body>
     </html>

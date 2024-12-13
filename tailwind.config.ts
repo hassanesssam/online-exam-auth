@@ -8,11 +8,15 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        poppins: ["Poppins"],
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
       screens:{
+        xs:"300px",
         sm:"576px",
         md:"768px",
         lg:"992px",

@@ -1,5 +1,5 @@
 import AuthVector from "@/components/authVector/page";
-import ForgetPasswordForm from "@/components/forgetPassowrdForm/page";
+import ForgetPasswordForm from "@/components/forgetPasswordForm/page";
 import NavAuth from "@/components/navAuth/page";
 
 export default function ForgetPassword() {
