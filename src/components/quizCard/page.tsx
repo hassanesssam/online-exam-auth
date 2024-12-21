@@ -49,6 +49,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz }) => {
         onClose={closeModal}
         quizTitle={quiz.title}
         quizDuration={quiz.duration}
+        quizId = {quiz._id}
       />
     </div>
   );
