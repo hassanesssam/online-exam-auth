@@ -4,9 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import QuizStartModal from '../modal/page';
 
-type QuizCardProps = {
-  quiz: any;
-};
+
 
 const QuizCard: React.FC<QuizCardProps> = ({ quiz }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);

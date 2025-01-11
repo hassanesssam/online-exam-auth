@@ -1,12 +1,12 @@
 'use client'
 import Image from "next/image";
-import ButtonForm from "../button/page";
 import { useFormik } from "formik";
 import * as Yup from 'yup';
-import axios from "axios";
 import { useState } from "react";
 import { useRouter } from 'next/navigation'; 
 import { signIn } from "next-auth/react";
+import ButtonForm from "@/components/button/page";
+import { resetPassword, sendForgotPasswordEmail, verifyResetCode } from "@/lib/actions/forgetPassword.action";
 
 
 interface FormValues {
@@ -16,74 +16,58 @@ interface FormValues {
     rePassword?: string;
   }
 
-export default function ForgetPasswordForm() {
-  const router = useRouter();
-  const [responseSucces , setResponse]= useState(null)
-  const [apiEmail , setApiEmail]= useState("")
-  const [apiError , setApiError]= useState(null)
-  const [steps , SetSteps]= useState("1")
-  const [isPasswordVisible, setPasswordVisible] = useState(false);
-  const [isRetypeVisible, setRetypeVisible] = useState(false);
-
-
-  const handleResendCode = async()=>{
-    try {
-      const { data } = await axios.post("https://exam.elevateegy.com/api/v1/auth/forgotPassword", {
-        email : apiEmail
-      });
-      console.log(data);
-      if (data.message === "success") {
-
-        setResponse(data.info)
-        // router.push('/verify-code');
-
+  export default function ForgetPasswordForm() {
+    const router = useRouter();
+    const [responseSuccess, setResponse] = useState(null);
+    const [apiEmail, setApiEmail] = useState("");
+    const [apiError, setApiError] = useState(null);
+    const [steps, setSteps] = useState("1");
+    const [isPasswordVisible, setPasswordVisible] = useState(false);
+    const [isRetypeVisible, setRetypeVisible] = useState(false);
+  
+    const handleResendCode = async () => {
+      try {
+        const data = await sendForgotPasswordEmail(apiEmail);
+        setResponse(data.info);
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-        if(axios.isAxiosError(error)){
-            console.log(error);
-            
-        }
-    }
-  }
-
-  const handleFormData = async(values : FormValues) => {
-    try {
+    };
+  
+    const handleFormData = async (values: FormValues) => {
+      try {
         if (steps === '1') {
-          const { data } = await axios.post('https://exam.elevateegy.com/api/v1/auth/forgotPassword', { email: values.email });
+          const data = await sendForgotPasswordEmail(values.email || '');
           setApiEmail(values.email || '');
           setResponse(data.info);
-          SetSteps('2');
+          setSteps('2');
         } else if (steps === '2') {
-          const { data } = await axios.post('https://exam.elevateegy.com/api/v1/auth/verifyResetCode', { resetCode: values.resetCode });
+          const data = await verifyResetCode(values.resetCode || '');
           setResponse(data.message);
-          SetSteps('3');
+          setSteps('3');
         } else if (steps === '3') {
-          await axios.put('https://exam.elevateegy.com/api/v1/auth/resetPassword', {
-            email : apiEmail,
-            newPassword: values.password,
-          });
-          router.push('/login');
+          await resetPassword(apiEmail, values.password || '');
+          router.push('/auth/login');
         }
       } catch (error) {
-        if (axios.isAxiosError(error)) {
-          setApiError(error.response?.data.message || 'An error occurred');
-        }
+        setApiError(error.message || 'An error occurred');
       }
-  };
+    };
+  
     const getValidationSchema = () => {
-        if (steps === '1') {
+      if (steps === '1') {
         return Yup.object({
-            email: Yup.string().email('Invalid email address').required('Email is required'),
+          email: Yup.string().email('Invalid email address').required('Email is required'),
         });
-        } else if (steps === '2') {
+      } else if (steps === '2') {
         return Yup.object({
-            resetCode: Yup.string()
+          resetCode: Yup.string()
             .matches(/^\d{6}$/, "Reset code must be exactly 6 digits")
             .required("Reset code is required"),
         });
-        } else if (steps === '3') {
+      } else if (steps === '3') {
         return Yup.object({
-            password: Yup.string()
+          password: Yup.string()
             .matches(
               /^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9]).{8,}$/,
               'Password must be at least 8 characters, include an uppercase letter, a lowercase letter, and a number'
@@ -97,36 +81,41 @@ export default function ForgetPasswordForm() {
             .oneOf([Yup.ref('password')], 'Passwords must match')
             .required('Confirm password is required'),
         });
-        }
+      }
     };
-const formik = useFormik<FormValues>({
-    initialValues:{
+  
+    const formik = useFormik<FormValues>({
+      initialValues: {
         email: '',
         resetCode: '',
         password: '',
         rePassword: '',
-    },
-    validationSchema : getValidationSchema()
-    ,onSubmit : handleFormData
-})
-const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  if (e.target.name === "email" && apiError) {
-    setApiError(null);
-  } else if (e.target.name === "resetCode" && apiError || responseSucces) {
-    setApiError(null);
-    setResponse(null);
-}
-  formik.handleChange(e); 
-};
-const handleIdentityGoogle = async()=>{
-  signIn("google" , { callbackUrl: "/" });
-}
-const handleIdentityFacebook = async()=>{
-  signIn("facebook" , { callbackUrl: "/" });
-}
-const handleIdentityTwitter = async()=>{
-  signIn("twitter" , { callbackUrl: "/" });
-}
+      },
+      validationSchema: getValidationSchema(),
+      onSubmit: handleFormData,
+    });
+  
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.name === "email" && apiError) {
+        setApiError(null);
+      } else if (e.target.name === "resetCode" && apiError || responseSuccess) {
+        setApiError(null);
+        setResponse(null);
+      }
+      formik.handleChange(e);
+    };
+  
+    const handleIdentityGoogle = async () => {
+      signIn("google", { callbackUrl: "/" });
+    };
+  
+    const handleIdentityFacebook = async () => {
+      signIn("facebook", { callbackUrl: "/" });
+    };
+  
+    const handleIdentityTwitter = async () => {
+      signIn("twitter", { callbackUrl: "/" });
+    };
 
   return (
     <div className="w-full">
@@ -156,8 +145,8 @@ const handleIdentityTwitter = async()=>{
                 {apiError && (
                 <p className="text-red-500 mt-3 text-sm p-0">{apiError}</p>
                 )}
-                {responseSucces && (
-                <p className="text-green-500 mt-3 text-sm p-0">{responseSucces}</p>
+                {responseSuccess && (
+                <p className="text-green-500 mt-3 text-sm p-0">{responseSuccess}</p>
                 )}
 
 
@@ -183,8 +172,8 @@ const handleIdentityTwitter = async()=>{
                         {apiError && (
                         <p className="text-red-500 mt-3 text-sm p-0">{apiError}</p>
                         )}
-                        {responseSucces && (
-                        <p className="text-green-500 mt-3 text-sm p-0">{responseSucces}</p>
+                        {responseSuccess && (
+                        <p className="text-green-500 mt-3 text-sm p-0">{responseSuccess}</p>
                         )}
 
 

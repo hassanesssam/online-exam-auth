@@ -1,35 +1,15 @@
 "use client";
 import { useState, useEffect } from "react";
-import axios from "axios";
-import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
-
-type Answer = {
-  answer: string;
-  key: string;
-};
-
-type Question = {
-  question: string;
-  answers: Answer[];
-  correct: string;
-};
-
-type QuizStartModalQuestionProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  examId: string;
-};
 
 const QuizStartModalQuestion: React.FC<QuizStartModalQuestionProps> = ({
   isOpen,
   onClose,
   examId,
 }) => {
-  const { data } = useSession();
-  const token = data?.token;
+
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [selectedAnswers, setSelectedAnswers] = useState<{
@@ -48,9 +28,25 @@ const QuizStartModalQuestion: React.FC<QuizStartModalQuestionProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      fetchQuizData();
+      (async () => {
+        try {
+          const quizData = await fetchQuizData(examId);
+          setQuestions(quizData);
+  
+          const exam = quizData[0]?.exam;
+  
+          if (exam?.duration) {
+            setTimeLeft(exam.duration * 60);
+          } else {
+            setError("Quiz not provided.");
+          }
+        } catch (error ) {
+          setError(error.message);
+        }
+      })();
     }
-  }, [isOpen]);
+  }, [isOpen, examId]);
+  
 
   useEffect(() => {
     if (timeLeft !== null && timeLeft > 0) {
@@ -68,32 +64,22 @@ const QuizStartModalQuestion: React.FC<QuizStartModalQuestionProps> = ({
     }
   }, [timeLeft]);
 
-  const fetchQuizData = async () => {
+  const fetchQuizData = async (examId: string) => {
     try {
-      const response = await axios.get(`https://exam.elevateegy.com/api/v1/questions?exam=${examId}`, {
-        headers: {
-          token,
-        },
-      });
-
-      if (response.data.message === "success" && response.data.questions) {
-        const { questions } = response.data;
-        const exam = questions[0].exam;
-
-        setQuestions(questions);
-
-        if (exam && exam.duration) {
-          setTimeLeft(exam.duration * 60);
-        } else {
-          setError("Quiz duration not provided.");
-        }
-      } else {
-        setError("Failed to fetch quiz data.");
+      const response = await fetch(`/api/questions?exam=${examId}`);
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch quiz data");
       }
-    } catch (error) {
-      setError("An error occurred while fetching quiz data.");
+  
+      const data = await response.json();
+      return data.questions;
+    } catch (error: any) {
+      throw new Error(error.message || "An unexpected error occurred");
     }
   };
+  
 
   const handleAnswerChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedAnswers({

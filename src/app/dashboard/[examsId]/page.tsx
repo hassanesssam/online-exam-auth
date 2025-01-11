@@ -1,7 +1,5 @@
-import { getServerSession } from 'next-auth';
-import axios from 'axios';
 import QuizCard from '@/components/quizCard/page';
-import { options } from '@/app/api/auth/[...nextauth]/route';
+import { cookies } from 'next/headers';
 
 
 type PageProps = {
@@ -12,19 +10,37 @@ type PageProps = {
 
 const fetchExam = async (examsId: string, token: string | undefined) => {
   try {
-    const res = await axios.get(`https://exam.elevateegy.com/api/v1/exams?subject=${examsId}`, {
-      headers: { token },
+    const response = await fetch(`${process.env.API}/exams?subject=${examsId}`, {
+      method: 'GET',
+      headers: {
+        token: token || '',
+      },
     });
-    return res.data.exams; 
+
+    if (!response.ok) {
+      console.error(`Error fetching exams: ${response.statusText}`);
+      return [];
+    }
+
+    const data = await response.json();
+    return data.exams;
   } catch (error) {
     console.error('Error fetching exams:', error);
     return [];
   }
 };
 
+
 export default async function QuizList({ params: { examsId } }: PageProps) {
-  const session = await getServerSession(options);
-  const token = session?.token;
+  // const session = await getServerSession(options);
+  // const token = session?.token;
+
+      const cookieStore = await cookies();
+      console.log('Cookies:', cookieStore);
+      const tokenCookie = cookieStore.get('Online_Exam_token')?.value;
+      console.log('Token Cookie:', tokenCookie);
+  
+      const token = tokenCookie;
     
   const quizzes = await fetchExam(examsId, token);
 
@@ -34,7 +50,7 @@ export default async function QuizList({ params: { examsId } }: PageProps) {
         <h2 className="text-[18px] font-medium text-[#0F0F0F] mb-6">Front-End Quiz</h2>
         <div className="space-y-4">
           {quizzes.length > 0 ? (
-            quizzes.map((quiz: any) => (
+            quizzes.map((quiz :examData ) => (
               <QuizCard key={quiz._id} quiz={quiz} />
             ))
           ) : (

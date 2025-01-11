@@ -1,6 +1,11 @@
-import QuizGriddd from "@/components/subjectList/page";
+import { fetchSubjects } from "@/lib/api/subject.api";
 import Image from "next/image";
-export default function Dashboard() {
+import QuizGrid from "./_components/subjectList/page";
+export default async function Dashboard() {  
+  const page = 1; 
+  const limit = 3; 
+  const initialSubjects = await fetchSubjects(page, limit);
+
   return (
     <>
       <div className="w-full grid grid-cols-1 lg:grid-cols-[25%_75%] gap-[10px]  lg:h-[280px] mt-[40px] lg:bg-white px-4 py-8 rounded-[20px] shadow-md">
@@ -91,7 +96,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <QuizGriddd />
+      <QuizGrid initialSubjects={initialSubjects} />
     </>
   );
 }

@@ -1,8 +1,8 @@
 import AuthVector from "@/components/authVector/page";
-import ForgetPasswordForm from "@/components/forgetPasswordForm/page";
+import LoginForm from "@/app/auth/login/_components/loginForm/page";
 import NavAuth from "@/components/navAuth/page";
 
-export default function ForgetPassword() {
+export default function Login() {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-[20px] md:gap-[100px] h-screen">
@@ -14,12 +14,10 @@ export default function ForgetPassword() {
             <NavAuth />
           </div>
           <div className="pl-[10px] pr-[30px] py-[60px] md:pl-[20px] md:pr-[200px] md:py-[150px]">
-            <ForgetPasswordForm />
+            <LoginForm />
           </div>
         </div>
       </div>
     </>
-  )
+  );
 }
-
-
