@@ -44,11 +44,12 @@ export const options :NextAuthOptions = {
                       });
 
                     const payload: APIResponse<LoginResponse> = await response.json();
-                    if(payload.message === "success"){
+                    if(typeof payload === "object" && !('code' in payload)){
                         (await cookies()).set("Online_Exam_token", payload.token, {
                             httpOnly: true,
                           });
                         return {
+                            id : payload.user._id,
                             token: payload.token,
                             ...payload.user,
                           };

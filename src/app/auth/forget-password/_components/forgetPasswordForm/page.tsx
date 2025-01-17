@@ -20,7 +20,7 @@ interface FormValues {
     const router = useRouter();
     const [responseSuccess, setResponse] = useState(null);
     const [apiEmail, setApiEmail] = useState("");
-    const [apiError, setApiError] = useState(null);
+    const [apiError, setApiError] = useState("");
     const [steps, setSteps] = useState("1");
     const [isPasswordVisible, setPasswordVisible] = useState(false);
     const [isRetypeVisible, setRetypeVisible] = useState(false);
@@ -50,7 +50,11 @@ interface FormValues {
           router.push('/auth/login');
         }
       } catch (error) {
-        setApiError(error.message || 'An error occurred');
+        if ((error as ErrorResponse)?.message) {
+          setApiError((error as ErrorResponse).message || 'An error occurred');
+        } else {
+          setApiError('An unexpected error occurred');
+        }
       }
     };
   
@@ -97,9 +101,9 @@ interface FormValues {
   
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.name === "email" && apiError) {
-        setApiError(null);
+        setApiError("");
       } else if (e.target.name === "resetCode" && apiError || responseSuccess) {
-        setApiError(null);
+        setApiError("");
         setResponse(null);
       }
       formik.handleChange(e);

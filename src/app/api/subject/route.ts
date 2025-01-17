@@ -18,11 +18,14 @@ export async function GET(req: Request) {
   try {
     const subjects = await fetchSubjects(pageNum, limitNum);
     return new Response(JSON.stringify({ subjects }), { status: 200 });
-  } catch (error ) {
-    console.error('Error fetching subjects:', error.message);
-    return new Response(
-      JSON.stringify({ error: 'Failed to fetch subjects' }),
-      { status: 500 }
-    );
+  } catch (error  ) {
+    
+    if ((error as ErrorResponse)?.message) {
+      console.error('Error fetching subjects:', (error as ErrorResponse).message);
+      return new Response(
+        JSON.stringify({ error: (error as ErrorResponse).message }),
+        { status: (error as ErrorResponse).code || 500 }
+      );
+    }
   }
 }

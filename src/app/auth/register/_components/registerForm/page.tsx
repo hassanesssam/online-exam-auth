@@ -25,9 +25,9 @@ export default function RegisterForm() {
       }
 
     } catch (error ) {
-      if (error.message.includes("username already exists")) {
+      if ((error as ErrorResponse).message.includes("username already exists")) {
         setApiUserError("Username already exists");
-      } else if (error.message.includes("email already exists")) {
+      } else if ((error as ErrorResponse).message.includes("email already exists")) {
         setApiEmailError("Email already exists");
       }
     }
